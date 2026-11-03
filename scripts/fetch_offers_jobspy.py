@@ -9,8 +9,11 @@ from jobspy import scrape_jobs
 SITES = ["indeed", "zip_recruiter"]  # deliberately excludes linkedin, google -- see Step 11b
 SEARCH_TERM = "stage informatique"
 LOCATION = "France"
-RESULTS_WANTED = 30
-HOURS_OLD = 336  # 14 days -- this runs manually/occasionally, not on a schedule
+RESULTS_WANTED = 50
+
+# Default is 14 days -> 336 hours
+# 720 hours = 30 days
+HOURS_OLD = 720  # this runs manually/occasionally, not on a schedule
 
 def safe(row, key, default=None):
     # pandas NaN is truthy in Python (bool(float('nan')) is True), so a plain

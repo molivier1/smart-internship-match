@@ -50,7 +50,23 @@ def build_output(results, profile):
         # strong in -- ranked by how often it's actually asked for across your real
         # offers, with your own self-assessed level attached so the dashboard can
         # highlight "your most in-demand strength", not just "a skill you have".
-        "top_matched_skills": [{"skill": s, "count": c, "level": profile[s]["level"]} for s, c in top_matched],
+        
+        
+        #"top_matched_skills": [{"skill": s, "count": c, "level": profile[s]["level"]} for s, c in top_matched],
+        "top_matched_skills": [
+            {
+                "skill": s,
+                "count": c,
+                "level": next(
+                    profile[original]["level"]
+                    for original in profile
+                    if normalize_skill(original) == normalize_skill(s)
+                )
+            }
+            for s, c in top_matched
+        ],
+
+
         # Set expectations, don't hide the gap: real testing (see Step 12's note)
         # found compensation stated explicitly in only ~6.5% of real postings, so
         # this is reported as a count, not built into a chart that would mostly be

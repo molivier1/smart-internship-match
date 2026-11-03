@@ -2,7 +2,7 @@ import csv, json, os, time
 import requests
 
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
-MODEL = "qwen2.5:3b"
+MODEL = "qwen3.5:9b"
 TOP_N = 3
 MIN_COVERAGE = 0.3
 
@@ -27,7 +27,7 @@ def load_profile(path="data/profile/my_skills.csv"):
             profile[row["skill"]] = row["evidence"]
     return profile
 
-def call_ollama(prompt, retries=3, backoff=5):
+"""def call_ollama(prompt, retries=3, backoff=5):
     last_error = None
     for attempt in range(1, retries + 1):
         try:
@@ -44,7 +44,52 @@ def call_ollama(prompt, retries=3, backoff=5):
             print(f"  Ollama call attempt {attempt}/{retries} failed: {e}")
             if attempt < retries:
                 time.sleep(backoff)
-    raise RuntimeError(f"Ollama unreachable after {retries} attempts") from last_error
+    raise RuntimeError(f"Ollama unreachable after {retries} attempts") from last_error"""
+
+def call_ollama(prompt, retries=3, backoff=5):
+    last_error = None
+
+    session = requests.Session()
+    session.trust_env = False
+
+    for attempt in range(1, retries + 1):
+        try:
+            resp = session.post(
+                "http://127.0.0.1:11434/api/chat",
+                json={
+                    "model": MODEL,
+                    "messages": [
+                        {"role": "user", "content": prompt}
+                    ],
+                    "think": False,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0
+                    }
+                },
+                timeout=(10, 300),
+            )
+
+            resp.raise_for_status()
+            data = resp.json()
+
+            paragraph = data["message"]["content"].strip()
+
+            if not paragraph:
+                raise RuntimeError("Ollama returned an empty response")
+
+            return paragraph
+
+        except Exception as e:
+            last_error = e
+            print(f"  Ollama call attempt {attempt}/{retries} failed: {e}")
+
+            if attempt < retries:
+                time.sleep(backoff)
+
+    raise RuntimeError(
+        f"Ollama failed after {retries} attempts"
+    ) from last_error
 
 def main():
     profile = load_profile()

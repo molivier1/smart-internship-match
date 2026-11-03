@@ -2,7 +2,7 @@ import json, os, time
 import requests
 
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
-MODEL = "qwen2.5:3b"
+MODEL = "qwen3.5:9b"
 
 PROMPT_TEMPLATE = """Extract ONLY these things from this job/internship description text
 (it may be in French or English).
@@ -19,7 +19,7 @@ TEXT:
 {text}
 """
 
-def call_ollama(prompt, retries=3, backoff=5):
+"""def call_ollama(prompt, retries=3, backoff=5):
     last_error = None
     for attempt in range(1, retries + 1):
         try:
@@ -36,7 +36,54 @@ def call_ollama(prompt, retries=3, backoff=5):
             print(f"  Ollama call attempt {attempt}/{retries} failed: {e}")
             if attempt < retries:
                 time.sleep(backoff)
-    raise RuntimeError(f"Ollama unreachable or model not available after {retries} attempts") from last_error
+    raise RuntimeError(f"Ollama unreachable or model not available after {retries} attempts") from last_error"""
+
+
+def call_ollama(prompt, retries=3, backoff=5):
+    last_error = None
+
+    session = requests.Session()
+    session.trust_env = False
+
+    for attempt in range(1, retries + 1):
+        try:
+            resp = session.post(
+                "http://127.0.0.1:11434/api/chat",
+                json={
+                    "model": MODEL,
+                    "messages": [
+                        {"role": "user", "content": prompt}
+                    ],
+                    "format": "json",
+                    "think": False,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0
+                    }
+                },
+                timeout=(10, 300),
+            )
+
+            resp.raise_for_status()
+            data = resp.json()
+
+            output = data["message"]["content"]
+
+            if not output.strip():
+                raise RuntimeError(
+                    f"Empty response. Thinking: {data.get('message', {}).get('thinking')}"
+                )
+
+            return json.loads(output)
+
+        except Exception as e:
+            last_error = e
+            print(f"  Ollama attempt {attempt}/{retries} failed: {e}")
+
+            if attempt < retries:
+                time.sleep(backoff)
+
+    raise RuntimeError("Ollama failed") from last_error
 
 def main():
     # Reads the merged, common-schema file (Step 11c), not raw_offers.json directly
