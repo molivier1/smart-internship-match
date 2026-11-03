@@ -5,4 +5,6 @@
 /data/offers/structured_offers.json
 /data/offers/matches_all_local.json
 
+/data/offers/jobs_sample.csv
+
 /output/cv_drafts/
