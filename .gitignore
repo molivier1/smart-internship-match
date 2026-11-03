@@ -6,5 +6,6 @@
 /data/offers/matches_all_local.json
 
 /data/offers/jobs_sample.csv
+/data/offers/raw_offers.json
 
 /output/cv_drafts/
